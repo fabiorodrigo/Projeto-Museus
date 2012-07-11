@@ -1,0 +1,6 @@
+Para executar este exercício:
+============================
+
+http://localhost:8080/struts04
+
+

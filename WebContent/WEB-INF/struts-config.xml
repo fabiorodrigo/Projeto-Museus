@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.3//EN"
+          "http://struts.apache.org/dtds/struts-config_1_3.dtd">
+
+<struts-config>
+
+   <form-beans>
+      <form-bean name="reserva" type="form.ReservaForm"/>
+   </form-beans>
+
+   <action-mappings>
+
+      <action path="/reserva/criar" forward="/reserva/criar.jsp" />
+
+      <action path="/reserva/salvaOuAtualiza" 
+              name="reserva"
+              scope="request"
+              type="action.ReservaActions"
+              parameter="metodo"
+              validate="true"
+              input="/reserva/criar.jsp">
+
+         <forward name="Exibir" path="/reserva/exibir.jsp" />
+
+      </action>
+
+      <action path="/reserva/listar" 
+              type="action.ReservaActions"
+              parameter="metodo">
+
+         <forward name="Listar"       path="/reserva/listar.jsp" />
+         <forward name="Inexistente"  path="/reserva/inexistente.jsp" />
+
+      </action>
+
+      <action path="/reserva/exibir" 
+              type="action.ReservaActions"
+              parameter="metodo">
+
+         <forward name="Exibir"       path="/reserva/exibir.jsp" />
+         <forward name="Inexistente"  path="/reserva/inexistente.jsp" />
+
+      </action>
+
+      <action path="/reserva/editarOuRemover" 
+              type="action.ReservaActions"
+              scope="request"
+              name="reserva"
+              validate="false"
+              parameter="metodo">
+
+         <forward name="Editar"       path="/reserva/editar.jsp" />
+         <forward name="Listar"       path="/reserva/listar.jsp" />
+         <forward name="Inexistente"  path="/reserva/inexistente.jsp" />
+
+      </action>
+
+   </action-mappings>
+
+   <message-resources parameter="ApplicationResources" null="false" />
+
+</struts-config>

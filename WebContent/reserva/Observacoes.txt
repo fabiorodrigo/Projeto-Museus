@@ -1,0 +1,157 @@
+
+Sequência de ações ao chegar uma requisição:
+===========================================
+
+1. O Tomcat identifica a aplicação (em Webapps estão todas as aplicações
+   instaladas).
+
+2. Em  função  do  mapeamento  de  extensão  (*.do)  existente dentro do 
+   web.xml,   a   requisição   é  encaminhada   ao  servlet   denominado 
+   org.apache.struts.ActionServlet.
+
+3. Em função  da configuração  <load-on-startup/>  existente  dentro  do 
+   web.xml  para  o  ActionServlet e para o  CarregaListaDeCoresServlet,
+   esses servlets  serão carregados na memória no momento do startup  do
+   Tomcat. 
+
+4. O  método  init()  da  classe  ActionServlet é executado. Este método
+   init() efetua algumas inicializações. Entre elas:  
+ 
+   - inicializa o message resource bundle interno do framework
+   
+   - como  uma  aplicação  web  pode  ser  dividida em vários módulos de 
+     aplicação e como para cada módulo deve deve haver um struts-config.
+     xml independente, o ActionServlet armazena no objeto aplicação,  um
+     objeto  do tipo  ModuleConfig para cada  módulo de aplicação.  Cada
+     objeto ModuleConfig contém as informações de configuração  contidas
+     no struts-config.xml do seu módulo.
+     
+     Este  objeto  ModuleConfig  é   armazenado  no  objeto   aplicação, 
+     associado  ao  string  "org.apache.struts.action.MODULE" no caso do 
+     módulo    de    aplicação    default,   e   associado   ao   string 
+     "org.apache.struts.action.MODULE/nomeDoModulo" nos casos dos demais
+     módulos.
+
+   - é   armazenado   no   objeto   aplicação,   um   objeto   do   tipo 
+     MessageResources para cada MessageResourceBundle de cada módulo  de 
+     aplicação.     Cada     struts-config.xml     pode    definir    um 
+     MessageResourceBundle diferente para seu médulo de aplicação. 
+
+     Cada  objeto  do  tipo  MessageResources  é  associado  ao   string
+     "org.apache.struts.action.MESSAGE" (no caso do módulo de  aplicação 
+     default)   e   a   um   string   "org.apache.struts.action.MESSAGE/
+     nomeDoModulo" no caso dos demais módulos de aplicação.
+
+   - carrega e inicializa cada plug-in especificado no struts-config.xml.  
+   
+   Obs. Sempre que uma requisição  chega no servidor o struts identifica 
+        o módulo de  aplicação corrente e armazena no  objeto request os
+        objetos ModuleConfig e MessageResources  associados aos  strings 
+        "org.apache.struts.action.MODULE"  e  "org.apache.struts.action.
+        MESSAGE", respectivamente.
+   
+5. O método init() do servlet CarregaListaDeCoresServlet põe  no  objeto
+   aplicação um objeto do tipo ListaDeCores que irá conter as cores  que
+   serão exibinas por um combo box existente em reserva.jsp.
+   
+6. O métdo process() do ActionServlet é executado. Este método  armazena
+   os objetos ModuleConfig e MessageResources no objeto request corrente.
+
+7. Em  seguida  o  método  process() de  ActionServlet  chama  o  método 
+   process() de RequestProcessor que efetua as seguintes tarefas:
+
+   - identifica  o  componente  path do URI. Esta informação é utilizada
+     para selecionar a ação a ser invocada.
+
+   - identifica  o  ActionMapping  para a requisição: o componente  path
+     determinado acima é utilizado para este fim.
+
+   - verifica    se   um   form    bean   está   configurado    para   o 
+     ActionMapping.  Se  um  form bean   tiver  sido  configurado para o 
+     mapeamento  de  ação (ActionMapping), o framework tentará recuperar 
+     este objeto (ActionForm) do escopo especificado  no  mapeamento  de
+     ação.   Se   o  form bean  não  estiver  no   escopo  especificado,
+     ele será criado e armazenado neste escopo.  A chave utilizada  para
+     armazená-lo  no  escopo  especificado  é  o  valor  definido para o 
+     atributo 'name' do elemento Action. O form bean é  instanciado  com 
+     seu  construtor sem  argumentos. O  campo  numero  (do tipo int)  é 
+     inicializado para zero, os campos do tipo boolean são inicializados
+     com false e os campos do tipo String são inicializados com null.
+
+   - o  método  reset() do form  bean (um objeto  do tipo ActionForm)  é
+     executado,  independentemente  do  seu  escopo, e independentemente 
+     dele  ter  sido  criado agora ou  de ter  sido recuperado do escopo 
+     especificado.  Como  a  classe  ReservaForm  não  possui  um método 
+     reset(), é  executado o  método reset() de  ActionForm que não  faz 
+     nada. 
+
+   - as propriedades de escrita do ActionForm são populadas a partir dos 
+     valores dos parâmetros de requisição.    
+
+   - o método validate() da classe ActionForm  é  executado se houver um 
+     ActionForm configurado para este mapeamento de ação e se o atributo 
+     'validate' do elemento Action estiver configurado para 'true'. 
+
+   - caso exista um  atributo 'forward' ou 'include' configurado para o 
+     mapeamento de ação, será executado o método forward() ou  include()
+     de RequestDispatcher e o processamento da requisição irá  terminar.
+     Caso contrário, o processamento continua.
+
+   - é obtida ou  criada uma  instância do tipo Action  para processar a 
+     requisição.  Apenas  uma instância de cada Action é criada, isto é, 
+     as instâncias do tipo Action não são thread safe, logo,  não  devem 
+     possuir variáveis de instância que armazenam o estado de um cliente
+     específico.
+
+   - é chamado o método execute() da instância do tipo Action. A chamada
+     do método execute()  encontra-se dentro de um try/catch para que as 
+     exceções propagadas possam ser tratadas pelo Struts.
+
+   - é  efetuado  um  forward  (ou  send  redirect)   para   o   recurso 
+     identificado  pelo  objeto  ActionForward  retornado  pelo   método 
+     execute() da classe Action.
+
+
+O QUE ACONTECE QUANDO OCORRE O FORWARD PARA A PÁGINA reserva.jsp:
+================================================================
+
+1. O tag <bean:message key="titulo.aplicacao" /> irá procurar no message
+   resource   bundle   definido   para   esta   aplicação   uma    chave 
+   "titulo.aplicacao" e exibirá o valor associado. Este message resource
+   bundle será encontrado no objeto request.
+
+2. Em  função  do  tag  <html:errors/> será procurado no objeto  request
+   um objeto do tipo ActionErrors.  Caso esse objeto seja encontrado, as
+   mensagens de erro nele contidas serão exibidas. No momento do forward
+   para a página reserva.jsp este objeto não será encontrado.
+   
+3. Em função do tag <html:form action="trataReserva.do"> será  procurado
+   no struts-config.xml um mapeamento de ação para /trataReserva.   Como
+   existe  um  form  bean  com  escopo  de request configurado para este 
+   mapeamento de  ação(form.ReservaForm),  é verificado  se há no
+   objeto request  um  objeto  do tipo form.ReservaForm associado
+   ao String "formReservas".   Como  este  objeto  não  estará  lá,  ele
+   será criado (utilizando o construtor sem argumentos) e armazenado  no
+   escopo de request.
+   
+4. Os tags <html:text>,  <html:select>,  <html:checkbox> e  <html:radio>
+   fazem  com que os  valores das  propriedades  de leitura  (métodos do 
+   tipo get) do form bean sejam recuperados e exibidos no browser. 
+
+   O  tag  <html:optionsCollection>  existente  na  página reserva.jsp é 
+   utilizado para popular um combo box de cores.
+ 
+                      <html:optionsCollection 
+                     		name="listaDeCores"
+                     		property="lista"
+                        	label="label"
+                            value="valor"/>
+ 
+   Esse tag recupera do objeto aplicação um ArrayList<Cor> existente no
+   objeto    ListaDeCores    que    foi   colocado   lá   pelo  servlet 
+   CarregaListaDeCoresServlet no momento do Startup do Tomcat.
+   
+   
+   
+   
+   
